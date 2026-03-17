@@ -19,7 +19,7 @@ const NETWORK_INFO = {
 
 app.get("/order/:orderNumber", async (req, res) => {
   try {
-    const orderNumber = req.params.orderNumber;
+    const orderNumber = req.params.orderNumber.replace('#', '').trim();
     const order = await fetchOrderFromShopify(orderNumber);
     if (!order) return res.status(404).send("Order not found");
     const usdcAmount = await toUsdc(parseFloat(order.total_price), order.currency);
@@ -46,7 +46,8 @@ app.get("/health", (_, res) => res.json({ ok: true }));
 app.listen(PORT, () => console.log(`Running on http://localhost:${PORT}`));
 
 async function fetchOrderFromShopify(orderNumber) {
-  const url = `https://${STORE}/admin/api/2024-01/orders.json?name=%23${orderNumber}&status=any`;
+  const cleaned = orderNumber.replace('#', '').trim();
+  const url = `https://${STORE}/admin/api/2024-01/orders.json?name=%23${cleaned}&status=any`;
   const response = await axios.get(url, {
     headers: { "X-Shopify-Access-Token": SHOPIFY_TOKEN },
   });
