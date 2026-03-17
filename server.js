@@ -47,7 +47,7 @@ app.listen(PORT, () => console.log(`Running on http://localhost:${PORT}`));
 
 async function fetchOrderFromShopify(orderNumber) {
   const cleaned = orderNumber.replace('#', '').trim();
-  const url = `https://${STORE}/admin/api/2024-01/orders.json?name=%23${cleaned}&status=any`;
+  const url = `https://${STORE}/admin/api/2025-04/orders.json?name=%23${cleaned}&status=any`;
   const response = await axios.get(url, {
     headers: { "X-Shopify-Access-Token": SHOPIFY_TOKEN },
   });
