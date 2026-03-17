@@ -82,7 +82,7 @@ async function fetchOrderFromShopify(orderNumber) {
     orders(first: 1, query: "name:#${orderNumber}") {
       edges {
         node {
-          orderNumber
+          name
           totalPriceSet {
             shopMoney {
               amount
@@ -114,7 +114,7 @@ async function fetchOrderFromShopify(orderNumber) {
   if (!node) return null;
 
   return {
-    order_number: node.orderNumber,
+    order_number: node.name.replace('#', ''),
     total_price: node.totalPriceSet.shopMoney.amount,
     currency: node.totalPriceSet.shopMoney.currencyCode,
     customer: { first_name: node.customer?.firstName || "" },
