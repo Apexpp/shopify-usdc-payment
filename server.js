@@ -195,6 +195,13 @@ function paymentPage(order, total, currency, usdcAmount, net, firstName) {
       </div>
       <div class="section">
         <div class="section-label">Send to this wallet</div>
+        <div style="text-align:center;margin-bottom:16px;">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${USDC_WALLET}" 
+               alt="Wallet QR Code" 
+               style="border-radius:8px;border:1px solid #e8e8e4;" 
+               width="180" height="180" />
+          <div style="font-size:11px;color:#aaa;margin-top:6px;">Scan to get wallet address</div>
+        </div>
         <div class="address-block">
           <span class="address-text" id="walletAddr">${USDC_WALLET}</span>
           <button class="copy-btn" id="copyBtn" onclick="copyWallet()">Copy</button>
