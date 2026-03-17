@@ -9,7 +9,8 @@ const USDC_WALLET = process.env.USDC_WALLET_ADDRESS;
 const NETWORK = process.env.USDC_NETWORK || "polygon";
 const DEADLINE_HOURS = process.env.PAYMENT_DEADLINE_HOURS || 24;
 const STORE = process.env.SHOPIFY_STORE;
-const SHOPIFY_TOKEN = process.env.SHOPIFY_ADMIN_API_TOKEN;
+const CLIENT_ID = process.env.SHOPIFY_CLIENT_ID;
+const CLIENT_SECRET = process.env.SHOPIFY_CLIENT_SECRET;
 
 const NETWORK_INFO = {
   polygon:  { label: "Polygon",  note: "Send USDC on the Polygon network only",  color: "#7B3FE4" },
@@ -17,9 +18,29 @@ const NETWORK_INFO = {
   base:     { label: "Base",     note: "Send USDC on the Base network only",      color: "#0052FF" },
 };
 
+// Cache token so we don't request a new one every time
+let cachedToken = null;
+let tokenExpiresAt = 0;
+
+async function getShopifyToken() {
+  if (cachedToken && Date.now() < tokenExpiresAt - 60000) return cachedToken;
+  const response = await axios.post(
+    `https://${STORE}.myshopify.com/admin/oauth/access_token`,
+    new URLSearchParams({
+      grant_type: "client_credentials",
+      client_id: CLIENT_ID,
+      client_secret: CLIENT_SECRET,
+    }),
+    { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
+  );
+  cachedToken = response.data.access_token;
+  tokenExpiresAt = Date.now() + response.data.expires_in * 1000;
+  return cachedToken;
+}
+
 app.get("/order/:orderNumber", async (req, res) => {
   try {
-    const orderNumber = req.params.orderNumber.replace('#', '').trim();
+    const orderNumber = req.params.orderNumber.replace("#", "").trim();
     const order = await fetchOrderFromShopify(orderNumber);
     if (!order) return res.status(404).send("Order not found");
     const usdcAmount = await toUsdc(parseFloat(order.total_price), order.currency);
@@ -46,10 +67,10 @@ app.get("/health", (_, res) => res.json({ ok: true }));
 app.listen(PORT, () => console.log(`Running on http://localhost:${PORT}`));
 
 async function fetchOrderFromShopify(orderNumber) {
-  const cleaned = orderNumber.replace('#', '').trim();
-  const url = `https://${STORE}/admin/api/2025-04/orders.json?name=%23${cleaned}&status=any`;
+  const token = await getShopifyToken();
+  const url = `https://${STORE}.myshopify.com/admin/api/2025-04/orders.json?name=%23${orderNumber}&status=any`;
   const response = await axios.get(url, {
-    headers: { "X-Shopify-Access-Token": SHOPIFY_TOKEN },
+    headers: { "X-Shopify-Access-Token": token },
   });
   return response.data.orders?.[0] || null;
 }
